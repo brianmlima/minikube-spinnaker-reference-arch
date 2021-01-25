@@ -91,8 +91,8 @@ function runDockerCmd() {
 # HALYARD: Configure the Halyard instances kubectl so it can connect to the cluster. If kubectl on the same machine as
 # Halyard can connect to the cluster then telling Halyard what cluseter to deploy to is simple.
 function configureContainersKubectl() {
-  runDockerCmd "kubectl config set-cluster minikube --server=https://$(${PROJECT_HOME}/bin/minikube.sh ip):8443 --certificate-authority=/minikube/ca.crt"
-  runDockerCmd "kubectl config set-credentials minikube --certificate-authority=/root/.minikube/ca.crt --client-key=/minikube/client.key --client-certificate=/minikube/client.crt"
+  runDockerCmd "kubectl config set-cluster minikube --server=https://$(${PROJECT_HOME}/bin/minikube.sh ip):8443 --certificate-authority=/minikube/ca.crt --embed-certs=true"
+  runDockerCmd "kubectl config set-credentials minikube --certificate-authority=/root/.minikube/ca.crt --client-key=/minikube/client.key --client-certificate=/minikube/client.crt --embed-certs=true"
   runDockerCmd "kubectl config set-context ${KUBE_CONTEXT} --cluster=minikube --user=minikube"
   runDockerCmd "kubectl config use-context ${KUBE_CONTEXT}"
   runDockerCmd "kubectl get pods --request-timeout 5s"
@@ -153,11 +153,23 @@ function configureDockerRegistry() {
 }
 
 ########################################################################################################################
+# SPINNAKER: Configure a docker regestry for spinnaker pipelines.
+function configureLocalDockerRegistry() {
+  runDockerCmd "hal config provider docker-registry account add dockerhub --address index.docker.io --repositories library/nginx"
+  runDockerCmd "hal config provider docker-registry enable"
+}
+
+########################################################################################################################
 # SPINNAKER: Configure a provider so Spinnaker can connect
 function configureHalyardProvider() {
-  runDockerCmd "hal config provider kubernetes account add local-minikube --docker-registries dockerhub --context ${KUBE_CONTEXT}"
+  runDockerCmd "hal config provider kubernetes account add local-minikube --docker-registries dockerhub --context ${KUBE_CONTEXT} --live-manifest-calls=true"
   runDockerCmd "hal config provider kubernetes enable"
   runDockerCmd "hal config deploy edit --type=distributed --account-name local-minikube"
+}
+
+function addLocalDockerRepository() {
+  runDockerCmd "hal config provider docker-registry account add kubetest --address $(${PROJECT_HOME}/bin/services/dockerRedistry.sh minikube-uri) --insecure-registry=true"
+  runDockerCmd "hal deploy apply --wait-for-completion-timeout-minutes ${HAL_DEPLOY_TIMEOUT_MINS}"
 }
 
 ########################################################################################################################
@@ -266,13 +278,23 @@ function connect() {
   runDockerCmd "hal config security ui edit  --override-base-url ${UI_BASE_URL}"
   # HALYARD: set the spinnaker api base uri
   runDockerCmd "hal config security api edit --override-base-url ${API_BASE_URL}"
+
+  # Get the current spin-gate pod name
+  local SPIN_DECK_POD_PRE_DEPLOY=$(${PROJECT_HOME}/bin/kubectl.sh get pods -n ${SPINNAKER_NAMESPACE} -o=jsonpath="{$.items[?(@.metadata.labels.cluster=='${SPIN_DECK_SERVICE_NAME}')].metadata.name}")
+  local DEPLOYMENT_TIMER=$(timer)
   # HALYARD: Deploy the changes to spinnaker using halyard
   runDockerCmd "hal deploy apply --wait-for-completion-timeout-minutes ${HAL_DEPLOY_TIMEOUT_MINS}"
+  # Wait for the old spin-gate pod to be taken offline, this roughly is when the deployment is finished.
+  while ${PROJECT_HOME}/bin/kubectl.sh get pods -n spinnaker ${SPIN_DECK_POD_PRE_DEPLOY} &>/dev/null; do
+    echo "Waiting 10 more seconds for Spinnaker deployment to finish. Elapsed time: $(timer ${DEPLOYMENT_TIMER})"
+    sleep 10
+  done
+  printMSG "Total deployment elapsed time: $(timer ${DEPLOYMENT_TIMER})"
 
   # LOGGING
-  info "You can now reach Spinnaker UI at ${UI_BASE_URL} It may take a little time for the canary deployment to finish."
+  info "You can now reach Spinnaker UI at ${UI_BASE_URL} ."
   # LOGGING
-  info "You can now reach Spinnaker API at ${API_BASE_URL} It may take a little time for the canary deployment to finish."
+  info "You can now reach Spinnaker API at ${API_BASE_URL} ."
   # LOGGING
   info "Opening ${UI_BASE_URL} in your default browser"
   # SYSTEM: Open the spinnaker ui on the local machine in the default browser.
@@ -286,6 +308,7 @@ function usage() {
   echo "spinnaker       Prepares and installs the default Spinnaker into the minikube cluster."
   echo "connect         Mounts ports 8084 and 9000 from the spinnaker install to the Halyard container."
   echo "github          Configure Github"
+  echo "shell           Opens a shell in the halyard container."
   echo "front-50-logs   Gets the logs of the front-50 service."
   echo "dump-variables  Dumps all the environment variables and script variables for this script."
   echo "-h | --help     Show this message."
@@ -327,6 +350,14 @@ for arg in ${1}; do
     ;;
   github)
     configureGitHub
+    exit 0
+    ;;
+  add-local-docker)
+    addLocalDockerRepository
+    exit 0
+    ;;
+  shell)
+    runDockerCmd bash
     exit 0
     ;;
   dump-variables)

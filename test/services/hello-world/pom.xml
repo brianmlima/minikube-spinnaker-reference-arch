@@ -1,0 +1,755 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.4.0</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>org.bml</groupId>
+    <artifactId>kubetest</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>kubetest</name>
+    <description>Bare test application for testing k8s deployment</description>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <compiler.args></compiler.args>
+        <!-- Always check for new versions -->
+        <repository.update.policy>always</repository.update.policy>
+
+        <springfox.version>3.0.0</springfox.version>
+        <guava.version>30.0-jre</guava.version>
+        <lorem.version>2.1</lorem.version>
+        <junit.jupiter.version>5.7.0</junit.jupiter.version>
+        <jackson-bom.version>2.11.3</jackson-bom.version>
+        <lombok.version>1.18.16</lombok.version>
+
+        <logback.configurationFile>${project.basedir}/conf/logback-error.xml</logback.configurationFile>
+
+
+        <surefire.trimStackTrace>false</surefire.trimStackTrace>
+        <maven-surefire-plugin.forkCount>5</maven-surefire-plugin.forkCount>
+        <maven-surefire-plugin.reuseForks>true</maven-surefire-plugin.reuseForks>
+        <maven-surefire-plugin.skipAfterFailureCount>1</maven-surefire-plugin.skipAfterFailureCount>
+        <maven-surefire-plugin.testFailureIgnore>false</maven-surefire-plugin.testFailureIgnore>
+
+        <!-- SpotBugs is a more security oriented findbugs -->
+        <spotbugs.plugun.version>4.1.3</spotbugs.plugun.version>
+        <spotbugs.plugin.include.filter.path>
+            ${project.basedir}/conf/spotbugs/spotbugs-security-include.xml
+        </spotbugs.plugin.include.filter.path>
+        <spotbugs.plugin.exclude.filter.path>
+            ${project.basedir}/conf/spotbugs/spotbugs-security-exclude.xml
+        </spotbugs.plugin.exclude.filter.path>
+        <spotbugs.skip>false</spotbugs.skip>
+
+        <!-- JaCoCo Version -->
+        <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
+
+
+        <!-- CHECKSTYLE -->
+        <!-- Lets the project relative location of our checkstyle rules -->
+        <maven-checkstyle-plugin.configLocation>${basedir}/conf/checkstyle/checkstyle.xml
+        </maven-checkstyle-plugin.configLocation>
+
+        <!-- Checkstyle version. CheckStyle checks source code for style violations  -->
+        <checkstyle.plugin.version>3.0.0</checkstyle.plugin.version>
+        <!-- Build properties that can be changed by the child pom in profiles -->
+        <checkstyle.version>8.4</checkstyle.version>
+        <maven-checkstyle-plugin.failOnViolation>true</maven-checkstyle-plugin.failOnViolation>
+
+
+        <!--        &lt;!&ndash; jacoco figures out test coverage to the branch for us &ndash;&gt;-->
+        <!--        <jacoco.reportPath>>${project.build.directory}/jacoco.exec</jacoco.reportPath>-->
+        <!--        <jacoco.itReportPath>>${project.build.directory}/jacoco-it.exec</jacoco.itReportPath>-->
+
+        <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
+        <!-- LOGBACK CONFIG -->
+        <logback.configurationFile>${basedir}/conf/logback.xml</logback.configurationFile>
+        <!-- REPORTING -->
+        <org.apache.maven.plugins.maven-site-plugin.version>3.9.1</org.apache.maven.plugins.maven-site-plugin.version>
+        <org.apache.maven.plugins.maven-project-info-reports-plugin.version>3.1.1
+        </org.apache.maven.plugins.maven-project-info-reports-plugin.version>
+
+        <!-- Javadoc Plugin Version -->
+        <javadoc.plugin.version>3.0.0-M1</javadoc.plugin.version>
+        <javadoc.detect.links>true</javadoc.detect.links>
+
+
+        <delombok.output>${project.build.directory}/delombok</delombok.output>
+        <lombok-maven-plugin.version>1.18.0.0</lombok-maven-plugin.version>
+
+
+        <!-- Audit Logging Stuff -->
+        <org.javers.version>5.14.0</org.javers.version>
+        <org.aspectj.version>1.9.6</org.aspectj.version>
+        <!-- Audit Logging Stuff -->
+
+
+    </properties>
+
+    <profiles>
+        <!-- The DEFAULT prod profile USE : mvn -P prod clean package
+        tests ENABLED FAIL FAST
+        findbugs ENABLED FAIL BUILD
+        checkstyle ENABLED FAIL BUILD
+        javadoc ENABLED FAIL BUILD
+        -->
+        <profile>
+            <id>prod</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <checkstyle.skip>false</checkstyle.skip>
+                <findbugs.skip>false</findbugs.skip>
+                <skipTests>false</skipTests>
+                <maven.javadoc.skip>false</maven.javadoc.skip>
+                <spotbugs.skip>false</spotbugs.skip>
+
+            </properties>
+        </profile>
+    </profiles>
+
+
+    <dependencies>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-integration -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-integration</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-webflux -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-websocket -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-devtools -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson/jackson-bom -->
+        <dependency>
+            <groupId>com.fasterxml.jackson</groupId>
+            <artifactId>jackson-bom</artifactId>
+            <version>${jackson-bom.version}</version>
+            <type>pom</type>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-yaml -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.springfox/springfox-core -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>${springfox.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.springfox/springfox-swagger-ui -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>${springfox.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.9</version>
+        </dependency>
+
+
+        <!-- Event Streaming BEGIN -->
+        <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/kinesis -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>kinesis</artifactId>
+            <version>2.15.33</version>
+        </dependency>
+        <!-- Event Streaming END -->
+
+
+        <!-- BEGIN # ORM -->
+
+        <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.2.18</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-orm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-c3p0 -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-c3p0</artifactId>
+            <version>5.4.25.Final</version>
+        </dependency>
+
+        <!-- END # ORM -->
+
+
+        <!-- FlyWay DB Schema Manger BEGIN -->
+        <!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-core -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>7.3.0</version>
+        </dependency>
+        <!-- FlyWay DB Schema Manger END -->
+
+        <!-- Local Javers AUDIT LOGGING BEGIN -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+            <!--            <version>${org.springframework.version}</version>-->
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.javers</groupId>
+            <artifactId>javers-core</artifactId>
+            <version>${org.javers.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.javers</groupId>
+            <artifactId>javers-spring-jpa</artifactId>
+            <version>${org.javers.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.javers</groupId>
+            <artifactId>javers-persistence-sql</artifactId>
+            <version>${org.javers.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjrt</artifactId>
+            <version>${org.aspectj.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${org.aspectj.version}</version>
+        </dependency>
+        <!-- AUDIT LOGGING END -->
+
+
+        <!-- #######################################################################################################
+             # BEGIN TEST Dependedencies
+        -->
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.opentable.components/otj-pg-embedded -->
+        <dependency>
+            <groupId>com.opentable.components</groupId>
+            <artifactId>otj-pg-embedded</artifactId>
+            <version>0.13.3</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.thedeanda/lorem -->
+        <dependency>
+            <groupId>com.thedeanda</groupId>
+            <artifactId>lorem</artifactId>
+            <version>${lorem.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>3.6.28</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.hamcrest/hamcrest -->
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <version>2.2</version>
+            <scope>test</scope>
+        </dependency>
+        <!--
+            # END TEST Dependedencies
+            #######################################################################################################
+        -->
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                Manage explicitly excluded dependencies and fail the build with a helpfull error message if one is found.
+                Since logging is so important to debugging and auditing
+                we use the enforcer plugin to fail the build if any dependencies
+                include commons-logging, log4j or slf4j-log4j12.
+                This ensures logging will function as designed even if a transitive dependency imports a library that could break it.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <configuration>
+                    <rules>
+                        <bannedDependencies>
+                            <!-- FAIL the build if found.-->
+                            <level>ERROR</level>
+                            <excludes>
+                                <exclude>log4j:log4j</exclude>
+                                <exclude>commons-logging:commons-logging</exclude>
+                                <exclude>org.slf4j:slf4j-log4j12</exclude>
+                                <message>RUN "mvn dependency:tree
+                                    -Dincludes=log4j:log4j,commons-logging:commons-logging,org.slf4j:slf4j-log4j12"
+                                    to find the source of the banned dependency and exclude it. These dependencies
+                                    can not be allowed to leak into the project.
+                                </message>
+                            </excludes>
+                            <searchTransitive>true</searchTransitive>
+                        </bannedDependencies>
+                    </rules>
+                    <fail>true</fail>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>enforce-banned-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--
+                JavaDoc built from source and de-lombok'd generator source code.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <failOnError>false</failOnError>
+                    <show>package</show>
+                    <javadocVersion>1.5</javadocVersion>
+                    <source>1.8</source>
+                    <version>true</version>
+                    <detectOfflineLinks>true</detectOfflineLinks>
+                    <detectLinks>true</detectLinks>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>engineered-code</id>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                        <phase>site</phase>
+                        <configuration>
+                            <doclint>none</doclint>
+                            <sourcepath>${project.basedir}/src/main/java: ${delombok.output}</sourcepath>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+            Javadoc is basically incompatible with Lombok because it operates on source code before any annotation processors
+            have been run. This creates a situation where some of Lombok's features cause Javadoc to error out with a non-zero
+            exit code and fail the build. In order to eliminate this problem we de-lombok the source code into a directory that
+            is only used for generating javadocs. Its ugly but until Javadoc is updated to be compatable with tools like lombok
+            this is the cleanest solution.
+            -->
+            <plugin>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-maven-plugin</artifactId>
+                <version>${lombok-maven-plugin.version}</version>
+                <configuration>
+                    <sourceDirectory>${project.basedir}/generated/src/main/java</sourceDirectory>
+                    <outputDirectory>${delombok.output}</outputDirectory>
+                    <addOutputDirectory>false</addOutputDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>pre-site</phase>
+                        <goals>
+                            <goal>delombok</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                Normally we would not have to declare the compiler plugin but we have to do annotation processing so we
+                declare the compiler plugin and explicitly add the lombok processor.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+
+            <!--
+                The Build Helper plugin helps us seperate generated source code from hand written source code.
+            -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>generated/src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>generated/src/test/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Copy dependencies to a viewable lib directory for review. We might want to make this happen on a switch only -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <silent>true</silent>
+                            <skip>false</skip>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Use CheckStyle to enforce code style and help with code quality. Fail the build on error. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <id>checkstyle</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <configLocation>${project.basedir}/conf/checkstyle/checkstyle.xml</configLocation>
+                            <encoding>UTF-8</encoding>
+                            <consoleOutput>true</consoleOutput>
+                            <failsOnError>true</failsOnError>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Use SpotBugs to find common bugs and help with code quality. Fail the build on error. -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.1.4</version>
+                <configuration>
+                    <failOnError>true</failOnError>
+                    <effort>Max</effort>
+                    <threshold>Low</threshold>
+                    <xmlOutput>true</xmlOutput>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Test runner with configuration properties so you can fork and run tests in parallel. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+                <configuration>
+                    <useFile>false</useFile>
+                    <forkCount>${maven-surefire-plugin.forkCount}</forkCount>
+                    <reuseForks>${maven-surefire-plugin.reuseForks}</reuseForks>
+                    <skipAfterFailureCount>${maven-surefire-plugin.skipAfterFailureCount}</skipAfterFailureCount>
+                    <testFailureIgnore>${maven-surefire-plugin.testFailureIgnore}</testFailureIgnore>
+                    <systemPropertyVariables>
+                        <!--                        <buildDirectory>${project.build.directory}</buildDirectory>-->
+                        <logback.configurationFile>${logback.configurationFile}</logback.configurationFile>
+                        <com.mchange.v2.log.MLog>com.mchange.v2.log.slf4j.Slf4jMLog</com.mchange.v2.log.MLog>
+                        <surefire.trimStackTrace>false</surefire.trimStackTrace>
+                    </systemPropertyVariables>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${pom.basedir}/src/test/resources</additionalClasspathElement>
+                    </additionalClasspathElements>
+                </configuration>
+            </plugin>
+
+            <!--
+            Jacoco provides instrumentation and reporting on code coverage for testing. TODO: Fail the build if
+            coverage is under an agreed upon level.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <configuration>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>jacoco-initialize</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-site</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <!-- REPORTING ################################################################################################# -->
+    <reporting>
+        <excludeDefaults>true</excludeDefaults>
+        <outputDirectory>${project.build.directory}/site</outputDirectory>
+        <plugins>
+            <!-- Run the javadoc plugin on the src and de-lombok'd generated code -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <doclint>none</doclint>
+                    <source>8</source>
+                    <sourcepath>${project.basedir}/src/main/java: ${delombok.output}</sourcepath>
+                </configuration>
+            </plugin>
+            <!-- Ensure the Site plugin exists so we can control its version. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.5.1</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.9</version>
+                <configuration>
+                    <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
+                    <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+                </configuration>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>index</report>
+                            <report>license</report>
+                            <report>dependencies</report>
+                            <report>scm</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs.plugun.version}</version>
+                <configuration>
+                    <skip>${spotbugs.skip}</skip>
+                    <effort>Max</effort>
+                    <threshold>Low</threshold>
+                    <failOnError>false</failOnError>
+                    <includeFilterFile>${spotbugs.plugin.include.filter.path}</includeFilterFile>
+                    <excludeFilterFile>${spotbugs.plugin.exclude.filter.path}</excludeFilterFile>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>LATEST</version> <!-- Auto-update to the latest stable -->
+                        </plugin>
+                    </plugins>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.1.1</version>
+                <configuration>
+                    <configLocation>${maven-checkstyle-plugin.configLocation}</configLocation>
+                    <encoding>UTF-8</encoding>
+                    <logViolationsToConsole>true</logViolationsToConsole>
+                    <failOnViolation>${maven-checkstyle-plugin.failOnViolation}</failOnViolation>
+                    <linkXRef>false</linkXRef>
+                    <includeTestSourceDirectory>false</includeTestSourceDirectory>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>${checkstyle.version}</version>
+                        </dependency>
+                    </dependencies>
+                </configuration>
+            </plugin>
+
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <targetJdk>${maven.compiler.target}</targetJdk>
+                    <rulesets>
+                        <ruleset>/rulesets/java/imports.xml</ruleset>
+                        <ruleset>/rulesets/java/unusedcode.xml</ruleset>
+                    </rulesets>
+                    <systemPropertyVariables>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                        <logback.configurationFile>${basedir}/conf/logback.xml</logback.configurationFile>
+                        <com.mchange.v2.log.MLog>com.mchange.v2.log.slf4j.Slf4jMLog</com.mchange.v2.log.MLog>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+
+
+</project>

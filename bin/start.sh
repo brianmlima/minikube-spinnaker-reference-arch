@@ -41,18 +41,31 @@ isCommandInstalled docker true
 printMSG "${PASS} required local software installed"
 
 ################################################################################
-
-MINIKUBE="minikube --profile ${KUBE_CONTEXT}"
+MINIKUBE="${PROJECT_HOME}/bin/minikube.sh"
 ################################################################################
+
+printMSG "${INFO} Giving minikube half the system resources for performance."
+${MINIKUBE} config set memory ${MINIKUBE_MEMORY}
+${MINIKUBE} config set cpus ${MINIKUBE_CPUS}
+${MINIKUBE} config set vm-driver ${MINIKUBE_DRIVER}
 
 printMSG "${INFO} Removing minikube ${KUBE_CONTEXT}"
 ${MINIKUBE} delete
 printMSG "${INFO} Checking status of minikube ${KUBE_CONTEXT}"
 ${MINIKUBE} status
 printMSG "${INFO} Starting minikube ${KUBE_CONTEXT}"
-${MINIKUBE} start --kubernetes-version=1.18.14
-info "Enabling ingress on minikube"
+${MINIKUBE} start --kubernetes-version=1.18.14 --embed-certs
+
+################################################################################
+# Make sure the ingress plugin is installed so we can create loadbalancers like in a real cluster.
+# Make sure the ingress-dns plugin is enabled so we can access services using *.minikube.test and use ssl.
+# This is required to keep the project as close to a real implementation as possible and removes some problems you can
+# encounter if you try to get some components to use insecure services.
+# PER https://tanzu.vmware.com/developer/blog/securely-connect-with-your-local-kubernetes-environment/
+info "Checking that ingress minikube plugin is enabled"
 ${MINIKUBE} addons enable ingress
+info "Checking that ingress-dns minikube plugin is enabled"
+${MINIKUBE} addons enable ingress-dns
 
 printMSG "${INFO} Setting kubectl context to ${KUBE_CONTEXT}"
 ${PROJECT_HOME}/bin/kubectl.sh config use-context "${KUBE_CONTEXT}"

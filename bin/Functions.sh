@@ -183,9 +183,9 @@ function checkStatus() {
   local OK_MESSAGE="$2"
   FAIL_MESSAGE="$3"
   if [[ ${STATUS} == 0 ]]; then
-    printMSG "${OK_MESSAGE}"
+    info "${OK_MESSAGE}"
   else
-    printMSG "${FAIL_MESSAGE}"
+    error "${FAIL_MESSAGE}"
     exit ${STATUS}
   fi
 }
